@@ -1,19 +1,53 @@
-# Ambiente virtual Python
+# ==========================================
+# AMBIENTE VIRTUAL PYTHON
+# ==========================================
 .venv/
+venv/
+env/
 
-# Cache Python
+# ==========================================
+# CACHE PYTHON
+# ==========================================
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
-# Saídas geradas pelo projeto
+# ==========================================
+# DADOS DO PROJETO
+# ==========================================
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.xlsx
+
+# ==========================================
+# SAÍDAS GERADAS
+# ==========================================
 output/
-
-# Arquivos temporários
+logs/
 *.log
 
-# Configurações locais do editor
-.vscode/
+# ==========================================
+# VARIÁVEIS DE AMBIENTE E CREDENCIAIS
+# ==========================================
+.env
+.env.*
+!.env.example
 
-# Arquivos do sistema
+# ==========================================
+# JUPYTER NOTEBOOK
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# CONFIGURAÇÕES DO EDITOR
+# ==========================================
+.vscode/
+.idea/
+
+# ==========================================
+# ARQUIVOS DO SISTEMA
+# ==========================================
 .DS_Store
 Thumbs.db
