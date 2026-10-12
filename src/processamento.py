@@ -685,7 +685,117 @@ df_datas_maior_faturamento.orderBy(
 
 
 # ============================================================
-# 11. ENCERRAMENTO
+# 11. APRESENTAÇÃO DOS RESULTADOS
+# ============================================================
+
+# Apresenta um resumo final das respostas do case,
+# seguindo a mesma organização utilizada no enunciado.
+print("\n" + "=" * 70)
+print("RESUMO FINAL — CASE TÉCNICO")
+print("=" * 70)
+
+
+# ============================================================
+# 1. DEDUPLICAÇÃO
+# ============================================================
+
+print("\n1. DEDUPLICAÇÃO")
+print("-" * 70)
+
+print(
+    f"Compras: {qtd_compras} registros originais | "
+    f"{qtd_compras_dedup} após deduplicação | "
+    f"{duplicatas_removidas_compras} duplicados removidos"
+)
+
+print(
+    f"Pedidos: {qtd_pedidos} registros originais | "
+    f"{qtd_pedidos_dedup} após deduplicação | "
+    f"{duplicatas_removidas_pedidos} duplicados removidos"
+)
+
+
+# ============================================================
+# 2. VALIDAÇÃO
+# ============================================================
+
+print("\n2. VALIDAÇÃO")
+print("-" * 70)
+
+print("\nResumo da validação:")
+
+df_resumo_validacao.orderBy(
+    "status_validacao"
+).show(truncate=False)
+
+
+print("Inconsistências identificadas:")
+
+df_inconsistencias.orderBy(
+    "id_compra"
+).show(truncate=False)
+
+
+# ============================================================
+# 3. ANÁLISE DE COMPRAS
+# ============================================================
+
+print("\n3. ANÁLISE DE COMPRAS")
+print("-" * 70)
+
+
+# 3.1 Total de compras realizadas por cliente
+print("\n3.1 Total de compras realizadas por cliente")
+
+df_compras_por_cliente.orderBy(
+    "cliente_id"
+).show(truncate=False)
+
+
+# 3.2 Método de pagamento mais utilizado
+print("3.2 Método de pagamento mais utilizado")
+
+df_metodo_mais_utilizado.orderBy(
+    "metodo_pagamento"
+).show(truncate=False)
+
+
+# ============================================================
+# 4. PRODUTOS MAIS VENDIDOS
+# ============================================================
+
+print("\n4. PRODUTOS MAIS VENDIDOS")
+print("-" * 70)
+
+df_quantidade_por_produto.orderBy(
+    F.desc("quantidade_total_vendida"),
+    F.asc("produto_id")
+).show(truncate=False)
+
+
+# ============================================================
+# 5. DATAS COM MAIOR FATURAMENTO
+# ============================================================
+
+print("\n5. DATAS COM MAIOR FATURAMENTO")
+print("-" * 70)
+
+df_datas_maior_faturamento.orderBy(
+    "data_compra"
+).show(truncate=False)
+
+
+# ============================================================
+# FIM DO RESUMO
+# ============================================================
+
+print("\n" + "=" * 70)
+print("FIM DO PROCESSAMENTO")
+print("=" * 70)
+
+
+# ============================================================
+# 12. ENCERRAMENTO
 # ============================================================
 
 # Encerra a sessão Spark e libera os recursos utilizados
