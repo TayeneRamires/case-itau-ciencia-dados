@@ -1,12 +1,13 @@
-
 # Bibliotecas utilizadas na configuração do ambiente Python
 import os
 import sys
 
-# Gerenciamento da sessão Spark
+# Gerenciamento da sessão Spark e funções utilizadas
+# nas transformações e validações dos DataFrames.
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
-# Tipos de dados utilizados para definir os schemas dos arquivos CSV
+# Tipos de dados utilizados para definir os schemas dos arquivos CSV.
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -16,8 +17,9 @@ from pyspark.sql.types import (
     DecimalType
 )
 
-# Configura o PySpark para utilizar o interpretador Python da execução atual,
-# mantendo a consistência entre o processo principal (driver) e os workers.
+# Configura o PySpark para utilizar o mesmo interpretador Python
+# utilizado na execução atual, mantendo a consistência entre
+# o processo principal (driver) e os workers.
 os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
@@ -26,8 +28,9 @@ os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 # 1. INICIALIZAÇÃO DO SPARK
 # ============================================================
 
-# Inicializa a sessão Spark em modo local, utilizando os núcleos
-# de processamento disponíveis na máquina.
+# Inicializa a sessão Spark em modo local.
+# O parâmetro local[*] permite utilizar os núcleos de processamento
+# disponíveis na máquina durante a execução da POC.
 spark = (
     SparkSession.builder
     .appName("CaseCienciaDados")
@@ -35,8 +38,8 @@ spark = (
     .getOrCreate()
 )
 
-# Define o nível de log para destacar avisos e erros,
-# reduzindo mensagens informativas durante a execução.
+# Define o nível de log como WARN para reduzir mensagens
+# informativas do Spark e destacar avisos e erros.
 spark.sparkContext.setLogLevel("WARN")
 
 
@@ -44,9 +47,11 @@ spark.sparkContext.setLogLevel("WARN")
 # 2. DEFINIÇÃO DOS SCHEMAS
 # ============================================================
 
-# Define a estrutura e os tipos de dados do arquivo de compras,
-# garantindo a interpretação adequada de identificadores, datas
-# e valores monetários.
+# Define explicitamente a estrutura e os tipos de dados
+# esperados no arquivo compras.csv.
+#
+# A definição explícita do schema evita depender da inferência
+# automática do Spark e garante maior controle sobre os tipos.
 schema_compras = StructType([
     StructField("id_compra", IntegerType(), True),
     StructField("cliente_id", IntegerType(), True),
@@ -56,8 +61,8 @@ schema_compras = StructType([
 ])
 
 
-# Define a estrutura do arquivo de pedidos, especificando os tipos
-# dos identificadores, quantidades e preços unitários dos produtos.
+# Define explicitamente a estrutura e os tipos de dados
+# esperados no arquivo pedidos.csv.
 schema_pedidos = StructType([
     StructField("id_pedido", IntegerType(), True),
     StructField("id_compra", IntegerType(), True),
@@ -71,9 +76,11 @@ schema_pedidos = StructType([
 # 3. LEITURA DOS ARQUIVOS
 # ============================================================
 
-# Carrega o arquivo de compras utilizando o schema definido,
-# considerando a primeira linha como cabeçalho e preservando
-# a codificação e o formato das datas.
+# Carrega o arquivo compras.csv utilizando:
+# - primeira linha como cabeçalho;
+# - codificação UTF-8;
+# - formato de data yyyy-MM-dd;
+# - schema definido anteriormente.
 df_compras = (
     spark.read
     .option("header", True)
@@ -84,8 +91,10 @@ df_compras = (
 )
 
 
-# Carrega o arquivo de pedidos com o schema previamente definido,
-# garantindo a consistência dos tipos de dados utilizados nas análises.
+# Carrega o arquivo pedidos.csv utilizando:
+# - primeira linha como cabeçalho;
+# - codificação UTF-8;
+# - schema definido anteriormente.
 df_pedidos = (
     spark.read
     .option("header", True)
@@ -99,8 +108,8 @@ df_pedidos = (
 # 4. VALIDAÇÃO DA LEITURA
 # ============================================================
 
-# Exibe os registros originais de compras para conferência
-# antes da aplicação das regras de tratamento dos dados.
+# Exibe os dados originais de compras antes da aplicação
+# de qualquer tratamento.
 print("\n" + "=" * 70)
 print("COMPRAS — DADOS ORIGINAIS")
 print("=" * 70)
@@ -108,8 +117,8 @@ print("=" * 70)
 df_compras.show(truncate=False)
 
 
-# Exibe os registros originais de pedidos, permitindo verificar
-# os dados carregados e identificar possíveis duplicações.
+# Exibe os dados originais de pedidos antes da aplicação
+# de qualquer tratamento.
 print("\n" + "=" * 70)
 print("PEDIDOS — DADOS ORIGINAIS")
 print("=" * 70)
@@ -117,8 +126,8 @@ print("=" * 70)
 df_pedidos.show(truncate=False)
 
 
-# Apresenta a estrutura do DataFrame de compras para verificar
-# os nomes das colunas e os tipos de dados atribuídos.
+# Exibe o schema do DataFrame de compras para validar
+# os nomes das colunas e os tipos definidos.
 print("\n" + "=" * 70)
 print("SCHEMA — COMPRAS")
 print("=" * 70)
@@ -126,8 +135,8 @@ print("=" * 70)
 df_compras.printSchema()
 
 
-# Apresenta a estrutura do DataFrame de pedidos para confirmar
-# os tipos de dados definidos no carregamento.
+# Exibe o schema do DataFrame de pedidos para validar
+# os nomes das colunas e os tipos definidos.
 print("\n" + "=" * 70)
 print("SCHEMA — PEDIDOS")
 print("=" * 70)
@@ -135,14 +144,13 @@ print("=" * 70)
 df_pedidos.printSchema()
 
 
-# Contabiliza os registros carregados em cada DataFrame,
-# estabelecendo uma referência para a etapa de deduplicação.
+# Conta a quantidade total de registros carregados antes
+# da deduplicação.
 qtd_compras = df_compras.count()
 qtd_pedidos = df_pedidos.count()
 
 
-# Exibe as quantidades de registros originais carregados,
-# incluindo as possíveis duplicações presentes nos arquivos.
+# Exibe a quantidade de registros originais.
 print("\n" + "=" * 70)
 print("QUANTIDADE DE REGISTROS CARREGADOS")
 print("=" * 70)
@@ -152,8 +160,125 @@ print(f"Pedidos: {qtd_pedidos}")
 
 
 # ============================================================
-# 5. ENCERRAMENTO
+# 5. IDENTIFICAÇÃO DOS REGISTROS DUPLICADOS
 # ============================================================
 
-# Encerra a sessão Spark e libera os recursos associados à execução.
+# Agrupa os registros considerando todas as colunas do
+# DataFrame de compras.
+#
+# A função count() contabiliza quantas vezes cada combinação
+# completa de valores aparece.
+#
+# Registros com count maior que 1 representam linhas duplicadas.
+duplicatas_compras = (
+    df_compras
+    .groupBy(*df_compras.columns)
+    .count()
+    .filter(F.col("count") > 1)
+)
+
+
+# Aplica a mesma lógica ao DataFrame de pedidos para identificar
+# registros completamente duplicados.
+duplicatas_pedidos = (
+    df_pedidos
+    .groupBy(*df_pedidos.columns)
+    .count()
+    .filter(F.col("count") > 1)
+)
+
+
+# Exibe as duplicidades encontradas no arquivo de compras.
+# O orderBy é utilizado apenas para organizar a apresentação
+# dos resultados no terminal.
+print("\n" + "=" * 70)
+print("COMPRAS — REGISTROS DUPLICADOS")
+print("=" * 70)
+
+duplicatas_compras.orderBy("id_compra").show(truncate=False)
+
+
+# Exibe as duplicidades encontradas no arquivo de pedidos.
+print("\n" + "=" * 70)
+print("PEDIDOS — REGISTROS DUPLICADOS")
+print("=" * 70)
+
+duplicatas_pedidos.orderBy("id_pedido").show(truncate=False)
+
+
+# ============================================================
+# 6. DEDUPLICAÇÃO DOS DADOS
+# ============================================================
+
+# Remove registros completamente duplicados do DataFrame
+# de compras, mantendo apenas uma ocorrência de cada linha.
+#
+# O DataFrame original é preservado e um novo DataFrame
+# tratado é criado.
+df_compras_dedup = df_compras.dropDuplicates()
+
+
+# Remove registros completamente duplicados do DataFrame
+# de pedidos.
+df_pedidos_dedup = df_pedidos.dropDuplicates()
+
+
+# Conta a quantidade de registros após o tratamento.
+qtd_compras_dedup = df_compras_dedup.count()
+qtd_pedidos_dedup = df_pedidos_dedup.count()
+
+
+# Calcula quantos registros foram removidos durante
+# o processo de deduplicação.
+duplicatas_removidas_compras = (
+    qtd_compras - qtd_compras_dedup
+)
+
+duplicatas_removidas_pedidos = (
+    qtd_pedidos - qtd_pedidos_dedup
+)
+
+
+# Exibe o DataFrame de compras após a remoção das duplicidades.
+# A ordenação é utilizada somente para facilitar a visualização.
+print("\n" + "=" * 70)
+print("COMPRAS — APÓS DEDUPLICAÇÃO")
+print("=" * 70)
+
+df_compras_dedup.orderBy("id_compra").show(truncate=False)
+
+
+# Exibe o DataFrame de pedidos após a remoção das duplicidades.
+print("\n" + "=" * 70)
+print("PEDIDOS — APÓS DEDUPLICAÇÃO")
+print("=" * 70)
+
+df_pedidos_dedup.orderBy("id_pedido").show(truncate=False)
+
+
+# Apresenta um resumo comparando a quantidade de registros
+# antes e depois da deduplicação.
+print("\n" + "=" * 70)
+print("RESUMO DA DEDUPLICAÇÃO")
+print("=" * 70)
+
+print(
+    f"Compras: {qtd_compras} registros antes | "
+    f"{qtd_compras_dedup} depois | "
+    f"{duplicatas_removidas_compras} duplicados removidos"
+)
+
+print(
+    f"Pedidos: {qtd_pedidos} registros antes | "
+    f"{qtd_pedidos_dedup} depois | "
+    f"{duplicatas_removidas_pedidos} duplicados removidos"
+)
+
+
+# ============================================================
+# 7. ENCERRAMENTO
+# ============================================================
+
+# Encerra a sessão Spark e libera os recursos utilizados
+# durante a execução da aplicação.
 spark.stop()
