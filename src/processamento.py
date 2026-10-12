@@ -276,7 +276,178 @@ print(
 
 
 # ============================================================
-# 7. ENCERRAMENTO
+# 7. VALIDAÇÃO DOS VALORES DAS COMPRAS
+# ============================================================
+
+# Calcula o valor total de cada item de pedido multiplicando
+# a quantidade vendida pelo preço unitário do produto.
+#
+# Exemplo:
+# quantidade = 2
+# preco_unitario = 50.00
+# valor_item = 100.00
+df_pedidos_com_valor = (
+    df_pedidos_dedup
+    .withColumn(
+        "valor_item",
+        F.col("quantidade") * F.col("preco_unitario")
+    )
+)
+
+
+# Exibe os pedidos com o valor calculado de cada item.
+print("\n" + "=" * 70)
+print("PEDIDOS — VALOR CALCULADO DOS ITENS")
+print("=" * 70)
+
+df_pedidos_com_valor.orderBy("id_pedido").show(truncate=False)
+
+
+# Agrupa os pedidos pelo identificador da compra e soma
+# os valores dos itens associados a cada compra.
+#
+# Dessa forma, calculamos quanto cada compra deveria valer
+# considerando os pedidos registrados.
+df_total_pedidos_por_compra = (
+    df_pedidos_com_valor
+    .groupBy("id_compra")
+    .agg(
+        F.sum("valor_item").alias("valor_total_pedidos")
+    )
+)
+
+
+# Exibe o valor total calculado dos pedidos para cada compra.
+print("\n" + "=" * 70)
+print("TOTAL DOS PEDIDOS POR COMPRA")
+print("=" * 70)
+
+df_total_pedidos_por_compra.orderBy("id_compra").show(truncate=False)
+
+
+# Relaciona as compras com os valores calculados dos pedidos
+# utilizando o campo id_compra.
+#
+# O LEFT JOIN é utilizado para manter todas as compras,
+# inclusive aquelas que não possuem pedidos associados.
+#
+# Se fosse utilizado INNER JOIN, uma compra sem pedidos
+# desapareceria do resultado e a inconsistência poderia
+# deixar de ser identificada.
+df_validacao_compras = (
+    df_compras_dedup
+    .join(
+        df_total_pedidos_por_compra,
+        on="id_compra",
+        how="left"
+    )
+)
+
+
+# Calcula a diferença entre o valor registrado no arquivo
+# de compras e o valor calculado a partir dos pedidos.
+#
+# Quando não existem pedidos associados, o valor calculado
+# permanece nulo e a diferença também permanece nula.
+df_validacao_compras = (
+    df_validacao_compras
+    .withColumn(
+        "diferenca",
+        F.col("valor_total") - F.col("valor_total_pedidos")
+    )
+)
+
+
+# Classifica cada compra de acordo com o resultado da validação.
+#
+# SEM PEDIDOS:
+# a compra existe no arquivo compras.csv, mas não possui
+# registros correspondentes em pedidos.csv.
+#
+# OK:
+# o valor registrado em compras.csv é igual ao valor
+# calculado com base nos pedidos.
+#
+# INCONSISTENTE:
+# existem pedidos associados, mas os valores não coincidem.
+df_validacao_compras = (
+    df_validacao_compras
+    .withColumn(
+        "status_validacao",
+        F.when(
+            F.col("valor_total_pedidos").isNull(),
+            F.lit("SEM PEDIDOS")
+        )
+        .when(
+            F.col("valor_total") == F.col("valor_total_pedidos"),
+            F.lit("OK")
+        )
+        .otherwise(
+            F.lit("INCONSISTENTE")
+        )
+    )
+)
+
+
+# Seleciona somente as colunas mais relevantes para
+# apresentação do resultado da validação.
+df_validacao_compras = (
+    df_validacao_compras
+    .select(
+        "id_compra",
+        "cliente_id",
+        "data_compra",
+        "valor_total",
+        "valor_total_pedidos",
+        "diferenca",
+        "status_validacao"
+    )
+)
+
+
+# Exibe a comparação entre o valor registrado de cada compra
+# e o valor calculado a partir dos pedidos.
+print("\n" + "=" * 70)
+print("VALIDAÇÃO — VALOR DA COMPRA X TOTAL DOS PEDIDOS")
+print("=" * 70)
+
+df_validacao_compras.orderBy("id_compra").show(truncate=False)
+
+
+# Filtra somente as compras que apresentaram algum problema,
+# seja divergência financeira ou ausência de pedidos.
+df_inconsistencias = (
+    df_validacao_compras
+    .filter(F.col("status_validacao") != "OK")
+)
+
+
+# Exibe somente as inconsistências encontradas.
+print("\n" + "=" * 70)
+print("INCONSISTÊNCIAS IDENTIFICADAS")
+print("=" * 70)
+
+df_inconsistencias.orderBy("id_compra").show(truncate=False)
+
+
+# Gera um resumo da quantidade de registros por status,
+# facilitando a interpretação do resultado da validação.
+df_resumo_validacao = (
+    df_validacao_compras
+    .groupBy("status_validacao")
+    .count()
+)
+
+
+print("\n" + "=" * 70)
+print("RESUMO DA VALIDAÇÃO")
+print("=" * 70)
+
+df_resumo_validacao.orderBy("status_validacao").show(truncate=False)
+
+
+# ============================================================
+# 8. ENCERRAMENTO
 # ============================================================
 
 # Encerra a sessão Spark e libera os recursos utilizados
