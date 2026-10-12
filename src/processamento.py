@@ -605,7 +605,87 @@ df_produto_mais_vendido.orderBy(
 
 
 # ============================================================
-# 10. ENCERRAMENTO
+# 10. DATAS COM MAIOR FATURAMENTO
+# ============================================================
+
+# Agrupa as compras deduplicadas pela data em que foram realizadas.
+#
+# Para cada data é somado o valor_total registrado no arquivo
+# compras.csv, obtendo o faturamento registrado daquele dia.
+#
+# É utilizado o DataFrame deduplicado para evitar que compras
+# repetidas aumentem artificialmente o faturamento.
+df_faturamento_por_data = (
+    df_compras_dedup
+    .groupBy("data_compra")
+    .agg(
+        F.sum("valor_total").alias("faturamento_total_registrado")
+    )
+)
+
+
+# Exibe o faturamento de todas as datas, ordenando do maior
+# para o menor valor.
+#
+# O termo "registrado" é utilizado porque o cálculo considera
+# os valores existentes em compras.csv. A validação anterior
+# já identificou separadamente compras sem pedidos associados.
+print("\n" + "=" * 70)
+print("FATURAMENTO REGISTRADO POR DATA")
+print("=" * 70)
+
+df_faturamento_por_data.orderBy(
+    F.desc("faturamento_total_registrado"),
+    F.asc("data_compra")
+).show(truncate=False)
+
+
+# Identifica o maior faturamento diário registrado
+# entre todas as datas existentes no arquivo.
+df_maior_faturamento = (
+    df_faturamento_por_data
+    .agg(
+        F.max("faturamento_total_registrado").alias(
+            "maior_faturamento"
+        )
+    )
+)
+
+
+# Seleciona a data ou as datas que possuem o maior
+# faturamento registrado.
+#
+# Essa abordagem permite tratar corretamente uma situação
+# de empate, exibindo todas as datas que possuam o mesmo
+# maior faturamento.
+df_datas_maior_faturamento = (
+    df_faturamento_por_data
+    .join(
+        df_maior_faturamento,
+        df_faturamento_por_data["faturamento_total_registrado"]
+        == df_maior_faturamento["maior_faturamento"],
+        how="inner"
+    )
+    .select(
+        "data_compra",
+        "faturamento_total_registrado"
+    )
+)
+
+
+# Exibe explicitamente a data ou as datas com
+# o maior faturamento registrado.
+print("\n" + "=" * 70)
+print("DATA COM MAIOR FATURAMENTO")
+print("=" * 70)
+
+df_datas_maior_faturamento.orderBy(
+    "data_compra"
+).show(truncate=False)
+
+
+# ============================================================
+# 11. ENCERRAMENTO
 # ============================================================
 
 # Encerra a sessão Spark e libera os recursos utilizados
