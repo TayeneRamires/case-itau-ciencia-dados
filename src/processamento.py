@@ -126,8 +126,7 @@ print("=" * 70)
 df_pedidos.show(truncate=False)
 
 
-# Exibe o schema do DataFrame de compras para validar
-# os nomes das colunas e os tipos definidos.
+# Exibe o schema do DataFrame de compras.
 print("\n" + "=" * 70)
 print("SCHEMA — COMPRAS")
 print("=" * 70)
@@ -135,8 +134,7 @@ print("=" * 70)
 df_compras.printSchema()
 
 
-# Exibe o schema do DataFrame de pedidos para validar
-# os nomes das colunas e os tipos definidos.
+# Exibe o schema do DataFrame de pedidos.
 print("\n" + "=" * 70)
 print("SCHEMA — PEDIDOS")
 print("=" * 70)
@@ -144,13 +142,12 @@ print("=" * 70)
 df_pedidos.printSchema()
 
 
-# Conta a quantidade total de registros carregados antes
-# da deduplicação.
+# Conta os registros originais antes de qualquer tratamento.
 qtd_compras = df_compras.count()
 qtd_pedidos = df_pedidos.count()
 
 
-# Exibe a quantidade de registros originais.
+# Exibe a quantidade de registros carregados.
 print("\n" + "=" * 70)
 print("QUANTIDADE DE REGISTROS CARREGADOS")
 print("=" * 70)
@@ -163,8 +160,7 @@ print(f"Pedidos: {qtd_pedidos}")
 # 5. IDENTIFICAÇÃO DOS REGISTROS DUPLICADOS
 # ============================================================
 
-# Agrupa os registros considerando todas as colunas do
-# DataFrame de compras.
+# Agrupa os registros considerando todas as colunas do DataFrame.
 #
 # A função count() contabiliza quantas vezes cada combinação
 # completa de valores aparece.
@@ -178,8 +174,7 @@ duplicatas_compras = (
 )
 
 
-# Aplica a mesma lógica ao DataFrame de pedidos para identificar
-# registros completamente duplicados.
+# Aplica a mesma lógica ao DataFrame de pedidos.
 duplicatas_pedidos = (
     df_pedidos
     .groupBy(*df_pedidos.columns)
@@ -188,9 +183,7 @@ duplicatas_pedidos = (
 )
 
 
-# Exibe as duplicidades encontradas no arquivo de compras.
-# O orderBy é utilizado apenas para organizar a apresentação
-# dos resultados no terminal.
+# Exibe as duplicidades encontradas em compras.
 print("\n" + "=" * 70)
 print("COMPRAS — REGISTROS DUPLICADOS")
 print("=" * 70)
@@ -198,7 +191,7 @@ print("=" * 70)
 duplicatas_compras.orderBy("id_compra").show(truncate=False)
 
 
-# Exibe as duplicidades encontradas no arquivo de pedidos.
+# Exibe as duplicidades encontradas em pedidos.
 print("\n" + "=" * 70)
 print("PEDIDOS — REGISTROS DUPLICADOS")
 print("=" * 70)
@@ -212,9 +205,6 @@ duplicatas_pedidos.orderBy("id_pedido").show(truncate=False)
 
 # Remove registros completamente duplicados do DataFrame
 # de compras, mantendo apenas uma ocorrência de cada linha.
-#
-# O DataFrame original é preservado e um novo DataFrame
-# tratado é criado.
 df_compras_dedup = df_compras.dropDuplicates()
 
 
@@ -223,13 +213,12 @@ df_compras_dedup = df_compras.dropDuplicates()
 df_pedidos_dedup = df_pedidos.dropDuplicates()
 
 
-# Conta a quantidade de registros após o tratamento.
+# Conta novamente os registros após a deduplicação.
 qtd_compras_dedup = df_compras_dedup.count()
 qtd_pedidos_dedup = df_pedidos_dedup.count()
 
 
-# Calcula quantos registros foram removidos durante
-# o processo de deduplicação.
+# Calcula quantos registros foram removidos.
 duplicatas_removidas_compras = (
     qtd_compras - qtd_compras_dedup
 )
@@ -239,8 +228,7 @@ duplicatas_removidas_pedidos = (
 )
 
 
-# Exibe o DataFrame de compras após a remoção das duplicidades.
-# A ordenação é utilizada somente para facilitar a visualização.
+# Exibe as compras após a deduplicação.
 print("\n" + "=" * 70)
 print("COMPRAS — APÓS DEDUPLICAÇÃO")
 print("=" * 70)
@@ -248,7 +236,7 @@ print("=" * 70)
 df_compras_dedup.orderBy("id_compra").show(truncate=False)
 
 
-# Exibe o DataFrame de pedidos após a remoção das duplicidades.
+# Exibe os pedidos após a deduplicação.
 print("\n" + "=" * 70)
 print("PEDIDOS — APÓS DEDUPLICAÇÃO")
 print("=" * 70)
@@ -256,8 +244,7 @@ print("=" * 70)
 df_pedidos_dedup.orderBy("id_pedido").show(truncate=False)
 
 
-# Apresenta um resumo comparando a quantidade de registros
-# antes e depois da deduplicação.
+# Exibe um resumo do processo de deduplicação.
 print("\n" + "=" * 70)
 print("RESUMO DA DEDUPLICAÇÃO")
 print("=" * 70)
@@ -280,12 +267,10 @@ print(
 # ============================================================
 
 # Calcula o valor total de cada item de pedido multiplicando
-# a quantidade vendida pelo preço unitário do produto.
+# a quantidade pelo preço unitário.
 #
 # Exemplo:
-# quantidade = 2
-# preco_unitario = 50.00
-# valor_item = 100.00
+# 2 unidades x R$ 50,00 = R$ 100,00.
 df_pedidos_com_valor = (
     df_pedidos_dedup
     .withColumn(
@@ -304,10 +289,7 @@ df_pedidos_com_valor.orderBy("id_pedido").show(truncate=False)
 
 
 # Agrupa os pedidos pelo identificador da compra e soma
-# os valores dos itens associados a cada compra.
-#
-# Dessa forma, calculamos quanto cada compra deveria valer
-# considerando os pedidos registrados.
+# o valor dos itens relacionados a cada compra.
 df_total_pedidos_por_compra = (
     df_pedidos_com_valor
     .groupBy("id_compra")
@@ -317,7 +299,7 @@ df_total_pedidos_por_compra = (
 )
 
 
-# Exibe o valor total calculado dos pedidos para cada compra.
+# Exibe o total calculado dos pedidos por compra.
 print("\n" + "=" * 70)
 print("TOTAL DOS PEDIDOS POR COMPRA")
 print("=" * 70)
@@ -328,12 +310,11 @@ df_total_pedidos_por_compra.orderBy("id_compra").show(truncate=False)
 # Relaciona as compras com os valores calculados dos pedidos
 # utilizando o campo id_compra.
 #
-# O LEFT JOIN é utilizado para manter todas as compras,
-# inclusive aquelas que não possuem pedidos associados.
+# O LEFT JOIN mantém todas as compras, inclusive aquelas
+# que não possuem pedidos associados.
 #
-# Se fosse utilizado INNER JOIN, uma compra sem pedidos
-# desapareceria do resultado e a inconsistência poderia
-# deixar de ser identificada.
+# Isso permite identificar compras existentes em compras.csv
+# que não possuem correspondência em pedidos.csv.
 df_validacao_compras = (
     df_compras_dedup
     .join(
@@ -344,11 +325,8 @@ df_validacao_compras = (
 )
 
 
-# Calcula a diferença entre o valor registrado no arquivo
-# de compras e o valor calculado a partir dos pedidos.
-#
-# Quando não existem pedidos associados, o valor calculado
-# permanece nulo e a diferença também permanece nula.
+# Calcula a diferença entre o valor registrado na compra
+# e o valor calculado com base nos pedidos.
 df_validacao_compras = (
     df_validacao_compras
     .withColumn(
@@ -361,15 +339,13 @@ df_validacao_compras = (
 # Classifica cada compra de acordo com o resultado da validação.
 #
 # SEM PEDIDOS:
-# a compra existe no arquivo compras.csv, mas não possui
-# registros correspondentes em pedidos.csv.
+# a compra existe, mas não possui pedidos associados.
 #
 # OK:
-# o valor registrado em compras.csv é igual ao valor
-# calculado com base nos pedidos.
+# o valor registrado é igual ao valor calculado.
 #
 # INCONSISTENTE:
-# existem pedidos associados, mas os valores não coincidem.
+# existem pedidos associados, mas os valores são diferentes.
 df_validacao_compras = (
     df_validacao_compras
     .withColumn(
@@ -389,8 +365,8 @@ df_validacao_compras = (
 )
 
 
-# Seleciona somente as colunas mais relevantes para
-# apresentação do resultado da validação.
+# Mantém somente as colunas relevantes para a apresentação
+# do resultado da validação.
 df_validacao_compras = (
     df_validacao_compras
     .select(
@@ -405,7 +381,7 @@ df_validacao_compras = (
 )
 
 
-# Exibe a comparação entre o valor registrado de cada compra
+# Exibe a comparação entre o valor registrado na compra
 # e o valor calculado a partir dos pedidos.
 print("\n" + "=" * 70)
 print("VALIDAÇÃO — VALOR DA COMPRA X TOTAL DOS PEDIDOS")
@@ -414,15 +390,14 @@ print("=" * 70)
 df_validacao_compras.orderBy("id_compra").show(truncate=False)
 
 
-# Filtra somente as compras que apresentaram algum problema,
-# seja divergência financeira ou ausência de pedidos.
+# Filtra somente as compras que apresentaram algum problema.
 df_inconsistencias = (
     df_validacao_compras
     .filter(F.col("status_validacao") != "OK")
 )
 
 
-# Exibe somente as inconsistências encontradas.
+# Exibe somente as inconsistências identificadas.
 print("\n" + "=" * 70)
 print("INCONSISTÊNCIAS IDENTIFICADAS")
 print("=" * 70)
@@ -430,8 +405,8 @@ print("=" * 70)
 df_inconsistencias.orderBy("id_compra").show(truncate=False)
 
 
-# Gera um resumo da quantidade de registros por status,
-# facilitando a interpretação do resultado da validação.
+# Gera um resumo da quantidade de compras por status
+# de validação.
 df_resumo_validacao = (
     df_validacao_compras
     .groupBy("status_validacao")
@@ -439,6 +414,7 @@ df_resumo_validacao = (
 )
 
 
+# Exibe o resumo da validação.
 print("\n" + "=" * 70)
 print("RESUMO DA VALIDAÇÃO")
 print("=" * 70)
@@ -447,7 +423,109 @@ df_resumo_validacao.orderBy("status_validacao").show(truncate=False)
 
 
 # ============================================================
-# 8. ENCERRAMENTO
+# 8. ANÁLISE DE COMPRAS
+# ============================================================
+
+# Agrupa os dados de compras pelo cliente.
+#
+# Para cada cliente são calculados:
+# - quantidade de compras distintas realizadas;
+# - valor total registrado no arquivo compras.csv.
+#
+# O termo "registrado" é utilizado porque a etapa anterior
+# identificou que uma compra pode existir no arquivo de compras
+# sem possuir pedidos associados.
+#
+# Também é utilizado o DataFrame deduplicado para impedir que
+# registros repetidos distorçam os resultados.
+df_compras_por_cliente = (
+    df_compras_dedup
+    .groupBy("cliente_id")
+    .agg(
+        F.countDistinct("id_compra").alias("quantidade_compras"),
+        F.sum("valor_total").alias("valor_total_registrado")
+    )
+)
+
+
+# Exibe a quantidade de compras e o valor total registrado
+# para cada cliente.
+print("\n" + "=" * 70)
+print("ANÁLISE DE COMPRAS — TOTAL POR CLIENTE")
+print("=" * 70)
+
+df_compras_por_cliente.orderBy("cliente_id").show(truncate=False)
+
+
+# Agrupa as compras pelo método de pagamento e contabiliza
+# quantas compras distintas utilizaram cada método.
+df_compras_por_pagamento = (
+    df_compras_dedup
+    .groupBy("metodo_pagamento")
+    .agg(
+        F.countDistinct("id_compra").alias("quantidade_compras")
+    )
+)
+
+
+# Exibe todos os métodos de pagamento ordenados da maior
+# para a menor quantidade de compras.
+#
+# Em caso de empate na quantidade, os métodos são ordenados
+# alfabeticamente apenas para facilitar a visualização.
+print("\n" + "=" * 70)
+print("ANÁLISE DE COMPRAS — MÉTODOS DE PAGAMENTO")
+print("=" * 70)
+
+df_compras_por_pagamento.orderBy(
+    F.desc("quantidade_compras"),
+    F.asc("metodo_pagamento")
+).show(truncate=False)
+
+
+# Calcula qual foi a maior quantidade de compras encontrada
+# entre os métodos de pagamento.
+df_maior_quantidade_pagamento = (
+    df_compras_por_pagamento
+    .agg(
+        F.max("quantidade_compras").alias("maior_quantidade")
+    )
+)
+
+
+# Relaciona a quantidade de compras por método com o maior
+# valor encontrado.
+#
+# Dessa forma, se dois ou mais métodos tiverem a mesma
+# quantidade máxima de compras, todos serão apresentados,
+# tratando corretamente um possível empate.
+df_metodo_mais_utilizado = (
+    df_compras_por_pagamento
+    .join(
+        df_maior_quantidade_pagamento,
+        df_compras_por_pagamento["quantidade_compras"]
+        == df_maior_quantidade_pagamento["maior_quantidade"],
+        how="inner"
+    )
+    .select(
+        "metodo_pagamento",
+        "quantidade_compras"
+    )
+)
+
+
+# Exibe o método de pagamento mais utilizado.
+print("\n" + "=" * 70)
+print("MÉTODO DE PAGAMENTO MAIS UTILIZADO")
+print("=" * 70)
+
+df_metodo_mais_utilizado.orderBy(
+    "metodo_pagamento"
+).show(truncate=False)
+
+
+# ============================================================
+# 9. ENCERRAMENTO
 # ============================================================
 
 # Encerra a sessão Spark e libera os recursos utilizados
