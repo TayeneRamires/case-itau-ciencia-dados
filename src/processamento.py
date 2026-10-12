@@ -525,7 +525,87 @@ df_metodo_mais_utilizado.orderBy(
 
 
 # ============================================================
-# 9. ENCERRAMENTO
+# 9. PRODUTOS MAIS VENDIDOS
+# ============================================================
+
+# Agrupa os pedidos pelo identificador do produto.
+#
+# Para cada produto é somada a quantidade vendida em todos
+# os pedidos existentes após a deduplicação.
+#
+# É utilizado o DataFrame de pedidos deduplicado para evitar
+# que registros repetidos aumentem artificialmente a quantidade
+# vendida de determinado produto.
+df_quantidade_por_produto = (
+    df_pedidos_dedup
+    .groupBy("produto_id")
+    .agg(
+        F.sum("quantidade").alias("quantidade_total_vendida")
+    )
+)
+
+
+# Exibe o ranking completo dos produtos, ordenando da maior
+# para a menor quantidade total vendida.
+#
+# Em caso de empate, produto_id é utilizado como segundo
+# critério somente para manter a apresentação organizada.
+print("\n" + "=" * 70)
+print("PRODUTOS MAIS VENDIDOS — RANKING")
+print("=" * 70)
+
+df_quantidade_por_produto.orderBy(
+    F.desc("quantidade_total_vendida"),
+    F.asc("produto_id")
+).show(truncate=False)
+
+
+# Identifica a maior quantidade total vendida encontrada
+# entre todos os produtos.
+df_maior_quantidade_produto = (
+    df_quantidade_por_produto
+    .agg(
+        F.max("quantidade_total_vendida").alias(
+            "maior_quantidade_vendida"
+        )
+    )
+)
+
+
+# Seleciona o produto ou os produtos que possuem a maior
+# quantidade total vendida.
+#
+# Essa abordagem permite tratar corretamente situações
+# de empate, pois todos os produtos que atingirem a maior
+# quantidade serão apresentados.
+df_produto_mais_vendido = (
+    df_quantidade_por_produto
+    .join(
+        df_maior_quantidade_produto,
+        df_quantidade_por_produto["quantidade_total_vendida"]
+        == df_maior_quantidade_produto["maior_quantidade_vendida"],
+        how="inner"
+    )
+    .select(
+        "produto_id",
+        "quantidade_total_vendida"
+    )
+)
+
+
+# Exibe explicitamente o produto ou os produtos
+# com a maior quantidade total vendida.
+print("\n" + "=" * 70)
+print("PRODUTO MAIS VENDIDO")
+print("=" * 70)
+
+df_produto_mais_vendido.orderBy(
+    "produto_id"
+).show(truncate=False)
+
+
+# ============================================================
+# 10. ENCERRAMENTO
 # ============================================================
 
 # Encerra a sessão Spark e libera os recursos utilizados
