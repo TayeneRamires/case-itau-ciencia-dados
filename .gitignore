@@ -21,6 +21,10 @@ data/processed/
 *.parquet
 *.xlsx
 
+# Arquivos pequenos fornecidos para execução do case
+!data/compras.csv
+!data/pedidos.csv
+
 # ==========================================
 # SAÍDAS GERADAS
 # ==========================================
