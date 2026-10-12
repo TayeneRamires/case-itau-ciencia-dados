@@ -1,0 +1,8 @@
+id_compra,cliente_id,data_compra,valor_total,metodo_pagamento
+1,101,2023-10-01,150.50,Cartão de Crédito
+2,102,2023-10-02,200.00,Boleto
+3,103,2023-10-03,300.75,Cartão de Crédito
+4,101,2023-10-04,50.00,Pix
+5,104,2023-10-05,500.00,Cartão de Crédito
+1,101,2023-10-01,150.50,Cartão de Crédito
+2,102,2023-10-02,200.00,Boleto
